@@ -1,0 +1,7 @@
+{
+  "name": "TRUST-DR — Explainable AI for Rural Retinopathy Screening",
+  "description": "Explainable, trust-aware longitudinal diabetic retinopathy screening and clinical decision support platform for rural healthcare.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
