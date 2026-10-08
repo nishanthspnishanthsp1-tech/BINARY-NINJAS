@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, Printer, ShieldCheck, HeartPulse, CheckCircle2, AlertTriangle, Layers } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { X, ArrowLeft, Printer, ShieldCheck, HeartPulse, ArrowDownToLine, Eye, Calendar, User } from 'lucide-react';
 import { storage } from '../../db/storage';
 
 interface ScreeningReportModalProps {
@@ -13,7 +13,47 @@ export const ScreeningReportModal: React.FC<ScreeningReportModalProps> = ({
 }) => {
   const screening = storage.getScreeningById(screeningId);
   const patient = screening ? storage.getPatientById(screening.patientId) : null;
-  const comparison = screening && patient ? storage.getComparisonForScreening(patient.id, screening.id) : null;
+  const modalContentRef = useRef<HTMLDivElement>(null);
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
+  // Handle body scroll locking and browser history state back-navigation
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+    
+    // Prevent underlying dashboard scrolling while modal is open
+    document.body.style.overflow = 'hidden';
+
+    // Push a temporary history state so the browser back button closes the modal
+    const historyState = { reportModal: screeningId };
+    window.history.pushState(historyState, '');
+
+    const handlePopState = () => {
+      onClose();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [screeningId, onClose]);
 
   if (!screening || !patient) return null;
 
@@ -21,37 +61,76 @@ export const ScreeningReportModal: React.FC<ScreeningReportModalProps> = ({
     window.print();
   };
 
+  // Click outside to close: only close if the click originated on the darkened backdrop itself
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto print:p-0 print:bg-white">
-      <div className="bg-white rounded-xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 my-6 print:m-0 print:border-none print:shadow-none">
-        {/* Modal Controls (Hidden in Print) */}
-        <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-6 print:hidden">
-          <div className="flex items-center gap-2">
-            <HeartPulse className="w-5 h-5 text-teal-600" />
-            <h2 className="text-base font-bold text-slate-900">
-              Ophthalmic Screening & Clinical Decision Summary
-            </h2>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="report-modal-title"
+      onClick={handleBackdropClick}
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6 print:p-0 print:bg-white print:static print:inset-auto"
+    >
+      <div
+        ref={modalContentRef}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-2xl max-w-4xl w-full flex flex-col shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] print:max-h-none print:h-auto print:border-none print:shadow-none print:rounded-none overflow-hidden"
+      >
+        {/* STICKY TOP HEADER WITH "← Back" AND "X" (Close) BUTTON */}
+        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shrink-0 print:hidden">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 transition-colors cursor-pointer shrink-0"
+              aria-label="Back to dashboard"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">← Back</span>
+              <span className="sm:hidden">Back</span>
+            </button>
+
+            <div className="flex items-center gap-2 truncate">
+              <HeartPulse className="w-4 h-4 text-teal-600 shrink-0" />
+              <h2
+                id="report-modal-title"
+                className="text-xs sm:text-sm font-bold text-slate-900 truncate"
+              >
+                Screening Report: <span className="text-teal-800 font-mono">{patient.fullName}</span> ({screening.id})
+              </h2>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             <button
+              type="button"
               onClick={handlePrint}
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
+              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+              title="Print or Export PDF"
             >
-              <Printer className="w-4 h-4" />
-              <span>Print / Export PDF</span>
+              <Printer className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Print / PDF</span>
             </button>
+
             <button
+              type="button"
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-700 text-lg font-bold"
+              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              aria-label="Close report"
+              title="Close report (Esc)"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* PRINTABLE CLINICAL REPORT DOCUMENT */}
-        <div className="space-y-6 text-slate-900">
+        {/* SCROLLABLE CLINICAL REPORT DOCUMENT CONTENT AREA */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 text-slate-900 print:overflow-visible print:p-0">
           {/* Header */}
           <div className="border-b-2 border-slate-900 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
@@ -68,7 +147,7 @@ export const ScreeningReportModal: React.FC<ScreeningReportModalProps> = ({
               </p>
             </div>
 
-            <div className="text-right font-mono text-xs text-slate-600">
+            <div className="text-left sm:text-right font-mono text-xs text-slate-600">
               <p>Report ID: <strong className="text-slate-900">{screening.id}</strong></p>
               <p>Exam Date: {screening.date} — {screening.time}</p>
               <p>Examiner: {screening.doctorName}</p>
@@ -239,6 +318,37 @@ export const ScreeningReportModal: React.FC<ScreeningReportModalProps> = ({
             <p>
               <strong>REGULATORY MEDICAL DISCLAIMER:</strong> This AI system is intended for screening and clinical decision support. It does not replace professional ophthalmologist evaluation and does not independently prescribe or modify treatment. Generated under the Ramanagara Rural Retinopathy Tele-Health Network.
             </p>
+          </div>
+        </div>
+
+        {/* STICKY BOTTOM NAVIGATION BAR WITH "← Back to Dashboard" */}
+        <div className="sticky bottom-0 z-20 bg-slate-50/95 backdrop-blur-md border-t border-slate-200 px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 shrink-0 print:hidden">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>← Back to Dashboard</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition-colors cursor-pointer"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Print Report</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition-colors cursor-pointer"
+            >
+              <span>Close</span>
+            </button>
           </div>
         </div>
       </div>
