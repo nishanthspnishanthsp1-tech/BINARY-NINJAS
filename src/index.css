@@ -1,1 +1,135 @@
 @import "tailwindcss";
+
+/* ==========================================================================
+   DEDICATED CLINICAL SCREENING REPORT PRINT & SAVE AS PDF STYLESHEET
+   ========================================================================== */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm 12mm 12mm;
+  }
+
+  /* Reset document root to allow natural multi-page document flow */
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* When the report modal is active, hide everything outside the modal */
+  body.report-modal-active header,
+  body.report-modal-active nav,
+  body.report-modal-active main,
+  body.report-modal-active footer,
+  body.report-modal-active > #root > div > header,
+  body.report-modal-active > #root > div > nav,
+  body.report-modal-active > #root > div > main,
+  body.report-modal-active > #root > div > footer,
+  .no-print,
+  .print-hidden,
+  .report-modal-header-actions,
+  .report-modal-footer-actions,
+  [data-print-hide="true"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Unconstrain modal backdrop: remove fixed positioning, blur, and dark overlay */
+  .screening-report-modal-backdrop {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    z-index: auto !important;
+  }
+
+  /* Unconstrain report card container: full width, no fixed max-height or screen shadows */
+  .screening-report-modal-card {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Unconstrain scrollable content area into standard printable document */
+  .screening-report-content {
+    display: block !important;
+    position: static !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Hide interactive buttons and modal controls during print */
+  .report-modal-header-actions,
+  .report-modal-footer-actions,
+  .report-hide-on-print {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+  }
+
+  /* Prevent page breaks inside cards, tables, and important diagnostic visual blocks */
+  .print-break-inside-avoid,
+  .report-section-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Ensure medical images print sharply and don't break across pages */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure text colors, background tints, and borders render with high fidelity */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

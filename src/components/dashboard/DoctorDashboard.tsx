@@ -90,7 +90,7 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             Diabetic Retinopathy Screening Console
           </h1>
           <p className="text-sm text-slate-600 mt-1 max-w-2xl">
-            Longitudinal AI explainability, lesion localization, and clinical decision support for primary health centers in rural Karnataka.
+            Longitudinal AI explainability, lesion localization, and clinical decision support for primary health centers in rural India.
           </p>
         </div>
 
